@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "My Task",
+			"command": "C:/msys64/mingw64/bin/g++.exe",
+			"args": [
+                "-o",
+                "main.exe",
+                "-g",
+                "src/\\*.cpp",
+                "src/glad.c",
+                "-I./include",
+                "-I./src",
+                "-L./lib",
+                "-lfreeglut", "-lglu32", "-lopengl32",
+                "-lglfw3", "-lopengl32", "-lgdi32",
+            ],
+            "problemMatcher": ["$msCompile"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+		}
+	]
+}
