@@ -172,7 +172,7 @@ int main()
 	}
 
 	// std::u8string srcPath = std::filesystem::current_path().u8string() + "\\src";
-	Shader coloredShader("C:/Dev/cpp/src/shader.vs", "C:/Dev/cpp/src/shader.fs");
+	Shader coloredShader("C:/Dev/cpp/shaders/shader.vs", "C:/Dev/cpp/shaders/shader.fs");
 
 	// COLORED SHADER PROGRAM
 	// -------
