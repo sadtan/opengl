@@ -1,8 +1,8 @@
 
 
-#include <pch.h>
+#include <pch.hpp>
 #include <camera.h>
-#include <cube.h>
+#include <terrain_generator.h>
 
 //
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
@@ -10,7 +10,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
-std::string getFilePath(std::string filename);
+
 
 // settings
 const unsigned int SCR_WIDTH = 1080;
@@ -21,10 +21,10 @@ bool isWireframeMode = false;
 
 // Vew Matrix Configuration (CAMERA)
 Camera fps_camera(
-	glm::vec3(0.0f, 1.3f, 0.0f),
+	glm::vec3(0.0f, 120.0f, 0.0f),
 	glm::vec3(0.0f, 1.0f, 0.0f),
 	-90.0f,
-	0.0f //
+	 0.0f //
 );
 
 bool firstMouse = true;
@@ -33,6 +33,8 @@ float pitch = 0.0f;
 float lastX = SCR_WIDTH / 2.0;
 float lastY = SCR_HEIGHT / 2.0;
 float fov = 60.0f;
+
+int cols, rows = 1;
 
 //
 int main()
@@ -75,45 +77,8 @@ int main()
 
 	// Load Texture
 	unsigned int myTexture;
-	// texture 1
-	// ---------
-	glGenTextures(1, &myTexture);
-	glBindTexture(GL_TEXTURE_2D, myTexture);
-	// set the texture wrapping parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture wrapping to GL_REPEAT (default wrapping method)
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// set texture filtering parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	// load image, create texture and generate mipmaps
-	int width, height, nrChannels;
-	stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-	// The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-	// std::filesystem::path path = "./";
-	unsigned char *data = stbi_load(getFilePath("\\resources\\textures\\texture_atlas_1x3.jpg").c_str(), &width, &height, &nrChannels, 0);
-	if (data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else
-	{
-		std::cout << "Failed to load texture" << std::endl;
-	}
-	stbi_image_free(data);
 
-	// Generate Cubes (Pseudo )
-	Cube **cubesArr = new Cube *[15];
-
-	for (int i = 0; i < 15; i++)
-	{
-		cubesArr[i] = (Cube *)malloc(sizeof(Cube) * 15);
-		for (int j = 0; j < 15; j++)
-		{
-			cubesArr[i][j] = Cube(glm::vec3(i - 7, -1.0f, j - 7));
-			cubesArr[i][j].Init(myTexture, GRASS);
-		}
-	}
+	TerrainGenerator terrainGenerator;
 
 	// Render Config
 	// BACK FACE CULLING
@@ -128,6 +93,7 @@ int main()
 	float deltaTime = 0.0f; // Time between current frame and last frame
 	float lastFrame = 0.0f; // Time of last frame
 	float angle = 0;
+
 	// -----------
 	while (!glfwWindowShouldClose(window))
 	{
@@ -160,16 +126,15 @@ int main()
 		// Rotate Camera
 		// pass projection matrix to shader (note that in this case it could change every frame)
 		glm::mat4 projection = glm::perspective(glm::radians(fps_camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		glm::mat4 view = fps_camera.GetViewMatrix();  // make sure to initialize matrix to identity matrix first
 		glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-		glm::mat4 view = glm::mat4(1.0f);  // make sure to initialize matrix to identity matrix first
 
-		view = fps_camera.GetViewMatrix();
 
-		model = glm::mat4(1.0f);
-		for (int i = 0; i < 15; i++)
-			for (int j = 0; j < 15; j++)
-				cubesArr[i][j].Draw(projection, model, view);
-
+		// for (int i = 0; i < ROWS; i++)
+		// 	for (int j = 0; j < COLS; j++)
+		// 		cubesArr[i][j].Draw(projection, model, view);
+		// chunk.Draw(projection, model, view);
+		terrainGenerator.Draw(projection, model, view);
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		// -------------------------------------------------------------------------------
 		glfwSwapBuffers(window);
@@ -181,9 +146,8 @@ int main()
 	// optional: de-allocate all resources once they've outlived their purpose:
 	// ------------------------------------------------------------------------
 
-	for (int i = 0; i < 15; i++)
-		for (int j = 0; j < 15; j++)
-			cubesArr[i][j].Clean();
+	// chunk.Clean();
+	terrainGenerator.Clean();
 
 	// glfw: terminate, clearing all previously allocated GLFWresources.
 	//---------------------------------------------------------------
@@ -222,6 +186,10 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 	{
 		isWireframeMode = !isWireframeMode;
 	}
+	if (key == GLFW_KEY_E && action == GLFW_PRESS)
+	{
+		isWireframeMode = !isWireframeMode;
+	}
 }
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos)
@@ -252,10 +220,4 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 	// make sure the viewport matches the new window dimensions; note that width and
 	// height will be significantly larger than specified on retina displays.
 	glViewport(0, 0, width, height);
-}
-
-std::string getFilePath(std::string filename)
-{
-	std::string filePath = std::filesystem::current_path().concat(filename).string();
-	return filePath;
 }

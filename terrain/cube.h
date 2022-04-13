@@ -1,103 +1,231 @@
-#ifndef CUBE_H
-#define CUBE_H
+#pragma once
 
-#include <pch.h>
-#include <shader.h>
+#include <pch.hpp>
 
-std::string getFilePath1(std::string filename)
+enum Block_Type
 {
-    std::string filePath = std::filesystem::current_path().concat(filename).string();
-    return filePath;
+    GRASS, AIR, DIRT
+};
+
+struct Vertex 
+{
+    float Position[3];
+    float TexCord[2];
+};
+
+Block_Type GetBlockType(glm::vec3 pos)
+{
+    // srand ((x + 1) * (z + 1));
+    // int surface = 100 + rand() % 20;
+
+    // return y < surface ? GRASS : AIR;
+    float frequency = 0.1f;
+    float altitude  = 10;
+    int xOffset = glm::sin(pos.x * frequency) * altitude;
+    int zOffset = glm::sin(pos.z * frequency) * altitude;
+    
+    int surface = 100 + xOffset + zOffset;
+    int seaLevel = 12;
+
+    if (pos.y < surface)
+        return GRASS;
+    else if (pos.y < seaLevel)
+        return DIRT;
+    else
+        return AIR;
 }
 
-enum Block_Type {
-    GRASS
+static float frontFace [30] {
+        1.0f, 1.0f, 1.0f, 1.0f, 1.0f, // TOP    RIGHT
+        1.0f, 0.0f, 1.0f, 1.0f, 0.0f, // BOTTOM RIGHT
+        0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // BOTTOM LEFT
+        0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // BOTTOM LEFT
+        0.0f, 1.0f, 1.0f, 0.0f, 1.0f, // TOP    LEFT
+        1.0f, 1.0f, 1.0f, 1.0f, 1.0f, // TOP    RIGHT
+};
+static float rightFace [30] {
+        1.0f, 1.0f, 1.0f, 0.0f, 1.0f, // TOP    RIGHT
+        1.0f, 1.0f, 0.0f, 1.0f, 1.0f, // TOP    RIGHT BACK
+        1.0f, 0.0f, 1.0f, 0.0f, 0.0f, // BOTTOM RIGHT
+        1.0f, 0.0f, 1.0f, 0.0f, 0.0f, // BOTTOM RIGHT
+        1.0f, 1.0f, 0.0f, 1.0f, 1.0f, // TOP    RIGHT BACK
+        1.0f, 0.0f, 0.0f, 1.0f, 0.0f, // BOTTOM RIGHT BACK
+};
+static float backFace [30] {
+       1.0f, 1.0f, 0.0f, 0.0f, 1.0f, // TOP    RIGHT BACK //
+        0.0f, 1.0f, 0.0f, 1.0f, 1.0f, // TOP    LEFT  BACK //
+        1.0f, 0.0f, 0.0f, 0.0f, 0.0f, // BOTTOM RIGHT BACK //
+        1.0f, 0.0f, 0.0f, 0.0f, 0.0f, // BOTTOM RIGHT BACK //
+        0.0f, 1.0f, 0.0f, 1.0f, 1.0f, // TOP    LEFT  BACK //
+        0.0f, 0.0f, 0.0f, 1.0f, 0.0f, // BOTTOM LEFT  BACK //
+};
+static float leftFace [30] {
+        0.0f, 1.0f, 0.0f, 0.0f, 1.0f, // TOP    LEFT  BACK //
+        0.0f, 1.0f, 1.0f, 1.0f, 1.0f, // TOP    LEFT //
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, // BOTTOM LEFT  BACK //
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, // BOTTOM LEFT  BACK //
+        0.0f, 1.0f, 1.0f, 1.0f, 1.0f, // TOP    LEFT //
+        0.0f, 0.0f, 1.0f, 1.0f, 0.0f, // BOTTOM LEFT
+};
+static float topFace [30] {
+        0.0f, 1.0f, 1.0f, 0.0f, 0.0f, // TOP    LEFT
+        1.0f, 1.0f, 0.0f, 1.0f, 1.0f, // TOP    RIGHT BACK //
+        1.0f, 1.0f, 1.0f, 1.0f, 0.0f, // TOP    RIGHT
+        1.0f, 1.0f, 0.0f, 1.0f, 1.0f, // TOP    RIGHT BACK //
+        0.0f, 1.0f, 1.0f, 0.0f, 0.0f, // TOP    LEFT
+        0.0f, 1.0f, 0.0f, 0.0f, 1.0f, // TOP    LEFT  BACK //
+};
+static float bottomFace [30] {
+        0.0f, 0.0f, 1.0f, 0.0f , 1.0f, // BOTTOM LEFT
+        1.0f, 0.0f, 1.0f, 1.0f , 1.0f, // BOTTOM RIGHT
+        1.0f, 0.0f, 0.0f, 1.0f , 0.0f, // BOTTOM RIGHT BACK //
+        1.0f, 0.0f, 0.0f, 1.0f , 0.0f, // BOTTOM RIGHT BACK //
+        0.0f, 0.0f, 0.0f, 0.0f , 0.0f, // BOTTOM LEFT  BACK //
+        0.0f, 0.0f, 1.0f, 0.0f , 1.0f, // BOTTOM LEFT
 };
 
 class Cube
 {
 public:
     glm::vec3 position;
-    unsigned int cubeVBO, cubeVAO;
-    unsigned int myTexture;
-    Shader *cubeShader;
-
-    float vertices[180] = {
-
-        // FRONT FACE
-         1.0f,  1.0f, 0.0f, 1.0f, 1.0f, // TOP    RIGHT
-         1.0f,  0.0f, 0.0f, 1.0f, 0.0f, // BOTTOM RIGHT
-         0.0f,  0.0f, 0.0f, 0.0f, 0.0f, // BOTTOM LEFT
-         0.0f,  0.0f, 0.0f, 0.0f, 0.0f, // BOTTOM LEFT
-         0.0f,  1.0f, 0.0f, 0.0f, 1.0f, // TOP    LEFT
-         1.0f,  1.0f, 0.0f, 1.0f, 1.0f, // TOP    RIGHT
-
-        // RIGHT FACE
-         1.0f,  1.0f,  0.0f, 0.0f, 1.0f, // TOP    RIGHT
-         1.0f,  1.0f, -1.0f, 1.0f, 1.0f, // TOP    RIGHT BACK
-         1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // BOTTOM RIGHT
-         1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // BOTTOM RIGHT
-         1.0f,  1.0f, -1.0f, 1.0f, 1.0f, // TOP    RIGHT BACK
-         1.0f,  0.0f, -1.0f, 1.0f, 0.0f, // BOTTOM RIGHT BACK
-
-        // BACK FACE
-         1.0f,  1.0f, -1.0f, 0.0f, 1.0f, // TOP    RIGHT BACK //
-         0.0f,  1.0f, -1.0f, 1.0f, 1.0f, // TOP    LEFT  BACK //
-         1.0f,  0.0f, -1.0f, 0.0f, 0.0f, // BOTTOM RIGHT BACK //
-         1.0f,  0.0f, -1.0f, 0.0f, 0.0f, // BOTTOM RIGHT BACK //
-         0.0f,  1.0f, -1.0f, 1.0f, 1.0f, // TOP    LEFT  BACK //
-         0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // BOTTOM LEFT  BACK //
-
-        // LEFT FACE
-         0.0f,  1.0f, -1.0f, 0.0f, 1.0f, // TOP    LEFT  BACK //
-         0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // TOP    LEFT //
-         0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // BOTTOM LEFT  BACK //
-         0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // BOTTOM LEFT  BACK //
-         0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // TOP    LEFT //
-         0.0f,  0.0f,  0.0f, 1.0f, 0.0f, // BOTTOM LEFT
-
-        // TOP FACE
-         0.0f,  1.0f,  0.0f, 0.0f, 0.0f, // TOP    LEFT
-         1.0f,  1.0f, -1.0f, 1.0f, 1.0f, // TOP    RIGHT BACK //
-         1.0f,  1.0f,  0.0f, 1.0f, 0.0f, // TOP    RIGHT
-         1.0f,  1.0f, -1.0f, 1.0f, 1.0f, // TOP    RIGHT BACK //
-         0.0f,  1.0f,  0.0f, 0.0f, 0.0f, // TOP    LEFT          
-         0.0f,  1.0f, -1.0f, 0.0f, 1.0f, // TOP    LEFT  BACK //
-
-        // BOTTOM FACE
-         0.0f,  0.0f,  0.0f, 0.0f, 1.0f, // BOTTOM LEFT
-         1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // BOTTOM RIGHT
-         1.0f,  0.0f, -1.0f, 1.0f, 0.0f, // BOTTOM RIGHT BACK //
-         1.0f,  0.0f, -1.0f, 1.0f, 0.0f, // BOTTOM RIGHT BACK //
-         0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // BOTTOM LEFT  BACK //
-         0.0f,  0.0f,  0.0f, 0.0f, 1.0f, // BOTTOM LEFT
-    //
-    };
-
+    Block_Type cubeType;
+    float* vertices;
+    int visibleFacesCount;
+    
     Cube(glm::vec3 position_)
     {
         position = position_;
-        cubeShader = new Shader(getFilePath1("\\shaders\\cube_shader.vs").c_str(), getFilePath1("\\shaders\\cube_shader.fs").c_str());
+        cubeType = GetBlockType(position);
+        visibleFacesCount = 0;
     }
 
-    void Init(unsigned int texture, Block_Type blockType)
+    std::string GetType_Str() 
     {
-        float textureW = 16 * 3;
-        float textureH = 16 * 1;
-        if (blockType == GRASS) {
-            
-            // Texture Atlas Position
-            glm::vec2 index(3, 1);
+        static const char *enum_str[] =
+        { "GRASS", "AIR"};
+        std::string str = enum_str[cubeType]; 
+        return str;
+    }
+
+    Block_Type GetType() 
+    {
+        return cubeType;
+    }
+
+    void UpdateFaces(int *visibleFaces)
+    {
+        if (cubeType != AIR)
+        {
+
+            visibleFacesCount = 0;
+            for (int i = 0; i < 6; ++i)
+            {
+                visibleFacesCount += visibleFaces[i];
+            }
+
+            int newVerticesSize = visibleFacesCount * 5 * 6;
+            vertices = new float[newVerticesSize];
+
+            int offset = 0;
+
+            if (visibleFaces[0] == 1)
+            {
+                memcpy(vertices, frontFace, 6 * sizeof(Vertex));
+                offset++;
+            }
+            if (visibleFaces[1] == 1)
+            {
+                memcpy(vertices + offset * 30, rightFace, 6 * sizeof(Vertex));
+                offset++;
+            }
+            if (visibleFaces[2] == 1)
+            {
+                memcpy(vertices + offset * 30, backFace, 6 * sizeof(Vertex));
+                offset++;
+            }
+            if (visibleFaces[3] == 1)
+            {
+                memcpy(vertices + offset * 30, leftFace, 6 * sizeof(Vertex));
+                offset++;
+            }
+            if (visibleFaces[4] == 1)
+            {
+                memcpy(vertices + offset * 30, topFace, 6 * sizeof(Vertex));
+                offset++;
+            }
+            if (visibleFaces[5] == 1)
+            {
+                memcpy(vertices + offset * 30, bottomFace, 6 * sizeof(Vertex));
+            }
+
+            for (int i = 0; i < visibleFacesCount * 6; ++i)
+            {
+                vertices[i * 5 + 0] += position.x;
+                vertices[i * 5 + 1] += position.y;
+                vertices[i * 5 + 2] += position.z;
+            }
+        }
+    }
+
+    void InitTexture(unsigned int &texture)
+    {
+        if (cubeType != AIR)
+        {
+
+            float textureW = 16 * 3;
+            float textureH = 16 * 1;
+            glm::vec2 index(1, 1);
+
+            //
             float stepX = 1.0f / (textureW / 16.0f);
             float stepY = 1.0f / (textureH / 16.0f);
-            for (int i = 0; i < 36; ++i) // Offset texture coords
+
+            glm::vec3 faceNormal;
+            for (int i = 0; i < visibleFacesCount * 6; ++i)
             {
-                if (i < 6 * 4)
-                    index.x = 3; // Grass + Dirt
-                else if (i < 6 * 5)
-                    index.x = 1; // Grass
-                else
-                    index.x = 2; // Dirt
+
+                // Calculate Face Normal
+                // Front face
+                if (i % 6 == 0)
+                {
+                    glm::vec3 v0(vertices[i * 5 + 0],
+                                 vertices[i * 5 + 1],
+                                 vertices[i * 5 + 2]);
+                    glm::vec3 v1(vertices[(i + 1) * 5 + 0],
+                                 vertices[(i + 1) * 5 + 1],
+                                 vertices[(i + 1) * 5 + 2]);
+                    glm::vec3 v2(vertices[(i + 2) * 5 + 0],
+                                 vertices[(i + 2) * 5 + 1],
+                                 vertices[(i + 2) * 5 + 2]);
+
+                    glm::vec3 U(v1 - v0);
+                    glm::vec3 W(v2 - v0);
+                    faceNormal = -glm::cross(U, W);
+                }
+
+                // Offset texture coords
+                // -----------------------
+
+                // Front to left face
+                if (cubeType == GRASS)
+                {
+                    if (glm::length(glm::vec3(faceNormal.x, 0.0f, faceNormal.z)) != 0)
+                    {
+                        index.x = 3;
+                    }
+                    else if (faceNormal.y > 0) // Top face
+                    {
+                        index.x = 1;
+                    }
+                    else
+                    {
+                        index.x = 2;
+                    }
+                }
+                if (cubeType == DIRT)
+                {
+                    index.x = 2;
+                }
 
                 float texX = vertices[i * 5 + 3];
                 float texY = vertices[i * 5 + 4];
@@ -113,51 +241,15 @@ public:
                 vertices[i * 5 + 4] = texY;
             }
         }
-            glGenVertexArrays(1, &cubeVAO);
-            glGenBuffers(1, &cubeVBO);
-            glBindVertexArray(cubeVAO);
-
-            glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-            glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-            glEnableVertexAttribArray(0);
-            // color attribute
-            
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
-            glEnableVertexAttribArray(1);
-
-            // Texture
-            myTexture = texture;
-            cubeShader->use();
-            cubeShader->setInt("myTexture", 0);
-    }
-
-    void Draw(
-        glm::mat4 &projection,
-        glm::mat4 &model,
-        glm::mat4 &view)
-    {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, myTexture);
-        cubeShader->use();
-        cubeShader->setMat4("projection", projection);
-        cubeShader->setMat4("view", view);
-        glBindVertexArray(cubeVAO);
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, position);
-        cubeShader->setMat4("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        
     }
 
     void Clean()
     {
-        glDeleteVertexArrays(1, &cubeVAO);
-        glDeleteBuffers(1, &cubeVBO);
+        delete vertices;
+
     }
 };
-#endif
 
 // float textureCords[] = {
 //     // FRONT FACE
@@ -305,16 +397,15 @@ public:
 // 	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
 // }s
 
-//glDeleteVertexArrays(1, &VAO);
-//glDeleteBuffers(1, &VBO);
-//glDeleteBuffers(1, &EBO);
-
+// glDeleteVertexArrays(1, &VAO);
+// glDeleteBuffers(1, &VBO);
+// glDeleteBuffers(1, &EBO);
 
 // Shader
-//Shader coloredShader(getFilePath("\\shaders\\shader.vs").c_str(), getFilePath("\\shaders\\shader.fs").c_str());
+// Shader coloredShader(getFilePath("\\shaders\\shader.vs").c_str(), getFilePath("\\shaders\\shader.fs").c_str());
 // After declaring Texture
-//coloredShader.use();
-//coloredShader.setInt("myTexture", 0);
+// coloredShader.use();
+// coloredShader.setInt("myTexture", 0);
 // During rendering
-//coloredShader.use();
-//coloredShader.setMat4("projection", projection);
+// coloredShader.use();
+// coloredShader.setMat4("projection", projection);

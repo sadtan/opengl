@@ -1,7 +1,6 @@
-#ifndef SHADER_H
-#define SHADER_H
+#pragma once
 
-#include <pch.h>
+#include <pch.hpp>
 
 class Shader
 {
@@ -117,4 +116,3 @@ private:
         }
     }
 };
-#endif
